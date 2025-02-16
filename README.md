@@ -18,7 +18,7 @@ A simple REST API built in Go to manage student records.
 
 ## Installation & Running
 ### Prerequisites
-- Go installed (v1.20 or later)
+- Go installed (v1.21 or later)
 
 ### Steps
 ```sh

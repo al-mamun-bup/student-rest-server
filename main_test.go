@@ -31,6 +31,9 @@ func TestRoothandler(t *testing.T) {
 }
 
 func TestGetStudents(t *testing.T) {
+	// Case 1: When students slice is empty
+	students = []Student{} // Reset students list
+
 	req, err := http.NewRequest("GET", "/students", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -39,15 +42,33 @@ func TestGetStudents(t *testing.T) {
 	rr := httptest.NewRecorder()
 	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusOK)
-		w.Write([]byte("[]")) // Expecting an empty list initially
+		json.NewEncoder(w).Encode(students)
 	})
 
 	handler.ServeHTTP(rr, req)
 
-	expected := "[]"
-	if rr.Body.String() != expected {
-		t.Errorf("Expected %q, got %q", expected, rr.Body.String())
+	expectedEmpty := "[]\n"
+	if rr.Body.String() != expectedEmpty {
+		t.Errorf("[Empty Students] Expected %q, got %q", expectedEmpty, rr.Body.String())
+	}
+
+	// Case 2: When students slice has multiple entries
+	students = []Student{
+		{ID: "1", Name: "Al Mamun", Age: 20, Grade: "A"},
+		{ID: "2", Name: "Efaz", Age: 22, Grade: "B"},
+	}
+
+	req, err = http.NewRequest("GET", "/students", nil)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	rr = httptest.NewRecorder()
+	handler.ServeHTTP(rr, req)
+
+	expectedJSON, _ := json.Marshal(students)
+	if rr.Body.String() != string(expectedJSON)+"\n" {
+		t.Errorf("[Multiple Students] Expected %q, got %q", string(expectedJSON), rr.Body.String())
 	}
 }
 

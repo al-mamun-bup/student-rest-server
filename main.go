@@ -1,37 +1,27 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
 	"student-server/handlers"
+
+	"github.com/gorilla/mux"
 )
 
 func main() {
-	http.HandleFunc("/", handlers.HomeHandler)
-	http.HandleFunc("/students", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodPost {
-			handlers.AddStudentHandler(w, r)
-		} else if r.Method == http.MethodGet {
-			handlers.GetStudentsHandler(w, r)
-		} else {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		}
-	})
-	http.HandleFunc("/students/", func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodGet:
-			handlers.GetStudentByIDHandler(w, r)
-		case http.MethodPut:
-			handlers.UpdateStudentHandler(w, r)
-		case http.MethodDelete:
-			handlers.DeleteStudentHandler(w, r)
-		default:
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		}
-	})
+	// Created a new Gorilla Mux router
+	router := mux.NewRouter()
 
-	fmt.Println("Server is running on http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	// Define routes
+	router.HandleFunc("/", handlers.HomeHandler).Methods("GET")
+	router.HandleFunc("/students", handlers.GetStudentsHandler).Methods("GET")
+	router.HandleFunc("/students", handlers.AddStudentHandler).Methods("POST")
+	router.HandleFunc("/students/{id}", handlers.GetStudentByIDHandler).Methods("GET")
+	router.HandleFunc("/students/{id}", handlers.UpdateStudentHandler).Methods("PUT")
+	router.HandleFunc("/students/{id}", handlers.DeleteStudentHandler).Methods("DELETE")
+
+	// Starting the server
+	log.Println("Server running on port 8080...")
+	log.Fatal(http.ListenAndServe(":8080", router))
 }

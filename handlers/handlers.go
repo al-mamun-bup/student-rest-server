@@ -4,7 +4,10 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
+
 	"student-server/models"
+
+	"github.com/gorilla/mux"
 )
 
 var students []models.Student
@@ -16,6 +19,7 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 
 // GetStudentsHandler returns all students
 func GetStudentsHandler(w http.ResponseWriter, _ *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(students)
 }
 
@@ -33,9 +37,12 @@ func AddStudentHandler(w http.ResponseWriter, r *http.Request) {
 
 // GetStudentByIDHandler fetches a student by ID
 func GetStudentByIDHandler(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Path[len("/students/"):]
+	vars := mux.Vars(r)
+	id := vars["id"]
+
 	for _, student := range students {
 		if student.ID == id {
+			w.Header().Set("Content-Type", "application/json")
 			json.NewEncoder(w).Encode(student)
 			return
 		}
@@ -45,12 +52,15 @@ func GetStudentByIDHandler(w http.ResponseWriter, r *http.Request) {
 
 // UpdateStudentHandler updates a student's details
 func UpdateStudentHandler(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Path[len("/students/"):]
+	vars := mux.Vars(r)
+	id := vars["id"]
+
 	var updatedStudent models.Student
 	if err := json.NewDecoder(r.Body).Decode(&updatedStudent); err != nil {
 		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
+
 	for i, student := range students {
 		if student.ID == id {
 			students[i] = updatedStudent
@@ -64,7 +74,9 @@ func UpdateStudentHandler(w http.ResponseWriter, r *http.Request) {
 
 // DeleteStudentHandler deletes a student by ID
 func DeleteStudentHandler(w http.ResponseWriter, r *http.Request) {
-	id := r.URL.Path[len("/students/"):]
+	vars := mux.Vars(r)
+	id := vars["id"]
+
 	for i, student := range students {
 		if student.ID == id {
 			students = append(students[:i], students[i+1:]...)

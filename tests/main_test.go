@@ -78,7 +78,7 @@ func TestGetStudents(t *testing.T) {
 func TestPostStudent(t *testing.T) {
 	t.Run("Valid Student", func(t *testing.T) {
 		students = []models.Student{} // Reset student slice
-		newStudent := models.Student{ID: "1", Name: "Al Mamun", Age: 23, Grade: "A+"}
+		newStudent := models.Student{ID: "1", Name: "Al Mamun", Age: -1, Grade: "A+"}
 
 		studentJSON, err := json.Marshal(newStudent)
 		if err != nil {
@@ -169,7 +169,7 @@ func TestPostStudent(t *testing.T) {
 		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			var student models.Student
 			err := json.NewDecoder(r.Body).Decode(&student)
-			if err != nil || student.ID == "" || student.Age == 0 || student.Grade == "" {
+			if err != nil || student.ID == "" || student.Age <= 0 || student.Grade == "" {
 				http.Error(w, "Invalid input", http.StatusBadRequest)
 				return
 			}

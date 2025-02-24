@@ -1,37 +1,30 @@
 package main
 
 import (
-	"fmt"
 	"log"
 	"net/http"
 
+	"student-server/auth"
 	"student-server/handlers"
+
+	"github.com/gorilla/mux"
 )
 
 func main() {
-	http.HandleFunc("/", handlers.HomeHandler)
-	http.HandleFunc("/students", func(w http.ResponseWriter, r *http.Request) {
-		if r.Method == http.MethodPost {
-			handlers.AddStudentHandler(w, r)
-		} else if r.Method == http.MethodGet {
-			handlers.GetStudentsHandler(w, r)
-		} else {
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		}
-	})
-	http.HandleFunc("/students/", func(w http.ResponseWriter, r *http.Request) {
-		switch r.Method {
-		case http.MethodGet:
-			handlers.GetStudentByIDHandler(w, r)
-		case http.MethodPut:
-			handlers.UpdateStudentHandler(w, r)
-		case http.MethodDelete:
-			handlers.DeleteStudentHandler(w, r)
-		default:
-			http.Error(w, "Method not allowed", http.StatusMethodNotAllowed)
-		}
-	})
+	router := mux.NewRouter()
 
-	fmt.Println("Server is running on http://localhost:8080")
-	log.Fatal(http.ListenAndServe(":8080", nil))
+	// Public route (No authentication required)
+	router.HandleFunc("/", handlers.HomeHandler).Methods("GET")
+
+	// Protected routes (Require authentication)
+	protectedRoutes := router.PathPrefix("/students").Subrouter()
+	protectedRoutes.Use(auth.BasicAuthMiddleware) // Apply auth middleware
+	protectedRoutes.HandleFunc("", handlers.GetStudentsHandler).Methods("GET")
+	protectedRoutes.HandleFunc("", handlers.AddStudentHandler).Methods("POST")
+	protectedRoutes.HandleFunc("/{id}", handlers.GetStudentByIDHandler).Methods("GET")
+	protectedRoutes.HandleFunc("/{id}", handlers.UpdateStudentHandler).Methods("PUT")
+	protectedRoutes.HandleFunc("/{id}", handlers.DeleteStudentHandler).Methods("DELETE")
+
+	log.Println("Server running on port 8080...")
+	log.Fatal(http.ListenAndServe(":8080", router))
 }

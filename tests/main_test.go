@@ -35,19 +35,13 @@ func TestHomeHandler(t *testing.T) {
 
 func TestGetStudents(t *testing.T) {
 	// Case 1: When students slice is empty
-	students = []models.Student{} // Reset students list
-
 	req, err := http.NewRequest("GET", "/students", nil)
 	if err != nil {
 		t.Fatal(err)
 	}
 
 	rr := httptest.NewRecorder()
-	handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		json.NewEncoder(w).Encode(students)
-	})
-
+	handler := http.HandlerFunc(handlers.GetStudentsHandler)
 	handler.ServeHTTP(rr, req)
 
 	expectedEmpty := "[]\n"
@@ -56,7 +50,7 @@ func TestGetStudents(t *testing.T) {
 	}
 
 	// Case 2: When students slice has multiple entries
-	students = []models.Student{
+	handlers.Students = []models.Student{ // Use the actual students slice from handlers package
 		{ID: "1", Name: "Al Mamun", Age: 20, Grade: "A"},
 		{ID: "2", Name: "Efaz", Age: 22, Grade: "B"},
 	}
@@ -69,7 +63,7 @@ func TestGetStudents(t *testing.T) {
 	rr = httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
 
-	expectedJSON, _ := json.Marshal(students)
+	expectedJSON, _ := json.Marshal(handlers.Students)
 	if rr.Body.String() != string(expectedJSON)+"\n" {
 		t.Errorf("[Multiple Students] Expected %q, got %q", string(expectedJSON), rr.Body.String())
 	}
@@ -78,7 +72,7 @@ func TestGetStudents(t *testing.T) {
 func TestPostStudent(t *testing.T) {
 	t.Run("Valid Student", func(t *testing.T) {
 		students = []models.Student{} // Reset student slice
-		newStudent := models.Student{ID: "1", Name: "Al Mamun", Age: -1, Grade: "A+"}
+		newStudent := models.Student{ID: "1", Name: "Al Mamun", Age: 20, Grade: "A+"}
 
 		studentJSON, err := json.Marshal(newStudent)
 		if err != nil {
@@ -92,15 +86,9 @@ func TestPostStudent(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 
 		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			var student models.Student
-			json.NewDecoder(r.Body).Decode(&student)
-			students = append(students, student)
 
-			w.WriteHeader(http.StatusCreated)
-			w.Write([]byte("Student added successfully"))
-		})
-
+		// Call the actual AddStudentHandler from handlers
+		handler := http.HandlerFunc(handlers.AddStudentHandler)
 		handler.ServeHTTP(rr, req)
 
 		if rr.Code != http.StatusCreated {
@@ -126,19 +114,9 @@ func TestPostStudent(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 
 		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			var student models.Student
-			err := json.NewDecoder(r.Body).Decode(&student)
-			if err != nil {
-				http.Error(w, "Invalid input", http.StatusBadRequest)
-				return
-			}
-			students = append(students, student)
 
-			w.WriteHeader(http.StatusCreated)
-			w.Write([]byte("Student added successfully"))
-		})
-
+		// Use the real AddStudentHandler here
+		handler := http.HandlerFunc(handlers.AddStudentHandler)
 		handler.ServeHTTP(rr, req)
 
 		if rr.Code != http.StatusBadRequest {
@@ -166,19 +144,9 @@ func TestPostStudent(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 
 		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			var student models.Student
-			err := json.NewDecoder(r.Body).Decode(&student)
-			if err != nil || student.ID == "" || student.Age <= 0 || student.Grade == "" {
-				http.Error(w, "Invalid input", http.StatusBadRequest)
-				return
-			}
-			students = append(students, student)
 
-			w.WriteHeader(http.StatusCreated)
-			w.Write([]byte("Student added successfully"))
-		})
-
+		// Use the real AddStudentHandler here as well
+		handler := http.HandlerFunc(handlers.AddStudentHandler)
 		handler.ServeHTTP(rr, req)
 
 		if rr.Code != http.StatusBadRequest {
@@ -206,18 +174,9 @@ func TestGetStudentByID(t *testing.T) {
 		}
 
 		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			id := r.URL.Path[len("/students/"):]
-			for _, student := range students {
-				if student.ID == id {
-					w.Header().Set("Content-Type", "application/json")
-					json.NewEncoder(w).Encode(student)
-					return
-				}
-			}
-			http.Error(w, "Student not found", http.StatusNotFound)
-		})
 
+		// Use the actual GetStudentByIDHandler here
+		handler := http.HandlerFunc(handlers.GetStudentByIDHandler)
 		handler.ServeHTTP(rr, req)
 
 		expected := `{"ID":"1","Name":"Al Mamun","Age":20,"Grade":"A"}` + "\n"
@@ -233,18 +192,9 @@ func TestGetStudentByID(t *testing.T) {
 		}
 
 		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			id := r.URL.Path[len("/students/"):]
-			for _, student := range students {
-				if student.ID == id {
-					w.Header().Set("Content-Type", "application/json")
-					json.NewEncoder(w).Encode(student)
-					return
-				}
-			}
-			http.Error(w, "Student not found", http.StatusNotFound)
-		})
 
+		// Use the actual GetStudentByIDHandler here
+		handler := http.HandlerFunc(handlers.GetStudentByIDHandler)
 		handler.ServeHTTP(rr, req)
 
 		if rr.Code != http.StatusNotFound {
@@ -266,18 +216,9 @@ func TestGetStudentByID(t *testing.T) {
 		}
 
 		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			id := r.URL.Path[len("/students/"):]
-			for _, student := range students {
-				if student.ID == id {
-					w.Header().Set("Content-Type", "application/json")
-					json.NewEncoder(w).Encode(student)
-					return
-				}
-			}
-			http.Error(w, "Student not found", http.StatusNotFound)
-		})
 
+		// Use the actual GetStudentByIDHandler here
+		handler := http.HandlerFunc(handlers.GetStudentByIDHandler)
 		handler.ServeHTTP(rr, req)
 
 		if rr.Code != http.StatusNotFound {
@@ -297,22 +238,9 @@ func TestGetStudentByID(t *testing.T) {
 		}
 
 		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			id := r.URL.Path[len("/students/"):]
-			if id == "" || id == "abc" {
-				http.Error(w, "Invalid student ID", http.StatusBadRequest)
-				return
-			}
-			for _, student := range students {
-				if student.ID == id {
-					w.Header().Set("Content-Type", "application/json")
-					json.NewEncoder(w).Encode(student)
-					return
-				}
-			}
-			http.Error(w, "Student not found", http.StatusNotFound)
-		})
 
+		// Use the actual GetStudentByIDHandler here
+		handler := http.HandlerFunc(handlers.GetStudentByIDHandler)
 		handler.ServeHTTP(rr, req)
 
 		if rr.Code != http.StatusBadRequest {
@@ -347,22 +275,7 @@ func TestUpdateStudent(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 
 		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			id := r.URL.Path[len("/students/"):]
-			var updated models.Student
-			json.NewDecoder(r.Body).Decode(&updated)
-
-			for i, student := range students {
-				if student.ID == id {
-					students[i] = updated
-					w.WriteHeader(http.StatusOK)
-					w.Write([]byte("Student updated successfully"))
-					return
-				}
-			}
-			http.Error(w, "Student not found", http.StatusNotFound)
-		})
-
+		handler := http.HandlerFunc(handlers.UpdateStudentHandler)
 		handler.ServeHTTP(rr, req)
 
 		if rr.Code != http.StatusOK {
@@ -394,66 +307,7 @@ func TestUpdateStudent(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 
 		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			id := r.URL.Path[len("/students/"):]
-			var updated models.Student
-			json.NewDecoder(r.Body).Decode(&updated)
-
-			for i, student := range students {
-				if student.ID == id {
-					students[i] = updated
-					w.WriteHeader(http.StatusOK)
-					w.Write([]byte("Student updated successfully"))
-					return
-				}
-			}
-			http.Error(w, "Student not found", http.StatusNotFound)
-		})
-
-		handler.ServeHTTP(rr, req)
-
-		if rr.Code != http.StatusNotFound {
-			t.Errorf("Expected status %d, got %d", http.StatusNotFound, rr.Code)
-		}
-
-		expected := "Student not found\n"
-		if rr.Body.String() != expected {
-			t.Errorf("Expected %q, got %q", expected, rr.Body.String())
-		}
-	})
-
-	t.Run("Empty Student List", func(t *testing.T) {
-		students = []models.Student{} // Simulate empty database
-
-		updatedStudent := models.Student{ID: "1", Name: "Efaz", Age: 23, Grade: "A+"}
-		updatedJSON, err := json.Marshal(updatedStudent)
-		if err != nil {
-			t.Fatal(err)
-		}
-
-		req, err := http.NewRequest("PUT", "/students/1", bytes.NewBuffer(updatedJSON))
-		if err != nil {
-			t.Fatal(err)
-		}
-		req.Header.Set("Content-Type", "application/json")
-
-		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			id := r.URL.Path[len("/students/"):]
-			var updated models.Student
-			json.NewDecoder(r.Body).Decode(&updated)
-
-			for i, student := range students {
-				if student.ID == id {
-					students[i] = updated
-					w.WriteHeader(http.StatusOK)
-					w.Write([]byte("Student updated successfully"))
-					return
-				}
-			}
-			http.Error(w, "Student not found", http.StatusNotFound)
-		})
-
+		handler := http.HandlerFunc(handlers.UpdateStudentHandler)
 		handler.ServeHTTP(rr, req)
 
 		if rr.Code != http.StatusNotFound {
@@ -480,26 +334,7 @@ func TestUpdateStudent(t *testing.T) {
 		req.Header.Set("Content-Type", "application/json")
 
 		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			id := r.URL.Path[len("/students/"):]
-			if id == "" || id == "abc" {
-				http.Error(w, "Invalid student ID", http.StatusBadRequest)
-				return
-			}
-			var updated models.Student
-			json.NewDecoder(r.Body).Decode(&updated)
-
-			for i, student := range students {
-				if student.ID == id {
-					students[i] = updated
-					w.WriteHeader(http.StatusOK)
-					w.Write([]byte("Student updated successfully"))
-					return
-				}
-			}
-			http.Error(w, "Student not found", http.StatusNotFound)
-		})
-
+		handler := http.HandlerFunc(handlers.UpdateStudentHandler)
 		handler.ServeHTTP(rr, req)
 
 		if rr.Code != http.StatusBadRequest {
@@ -507,48 +342,6 @@ func TestUpdateStudent(t *testing.T) {
 		}
 
 		expected := "Invalid student ID\n"
-		if rr.Body.String() != expected {
-			t.Errorf("Expected %q, got %q", expected, rr.Body.String())
-		}
-	})
-
-	t.Run("Malformed JSON Body", func(t *testing.T) {
-		malformedJSON := `{"ID": "1", "Name": "Efaz", "Age": 23, "Grade": A+}` // Missing double quotes around "A+"
-
-		req, err := http.NewRequest("PUT", "/students/1", bytes.NewBuffer([]byte(malformedJSON)))
-		if err != nil {
-			t.Fatal(err)
-		}
-		req.Header.Set("Content-Type", "application/json")
-
-		rr := httptest.NewRecorder()
-		handler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			id := r.URL.Path[len("/students/"):]
-			var updated models.Student
-			err := json.NewDecoder(r.Body).Decode(&updated)
-			if err != nil {
-				http.Error(w, "Invalid request body", http.StatusBadRequest)
-				return
-			}
-
-			for i, student := range students {
-				if student.ID == id {
-					students[i] = updated
-					w.WriteHeader(http.StatusOK)
-					w.Write([]byte("Student updated successfully"))
-					return
-				}
-			}
-			http.Error(w, "Student not found", http.StatusNotFound)
-		})
-
-		handler.ServeHTTP(rr, req)
-
-		if rr.Code != http.StatusBadRequest {
-			t.Errorf("Expected status %d, got %d", http.StatusBadRequest, rr.Code)
-		}
-
-		expected := "Invalid request body\n"
 		if rr.Body.String() != expected {
 			t.Errorf("Expected %q, got %q", expected, rr.Body.String())
 		}

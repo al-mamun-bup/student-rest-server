@@ -12,6 +12,8 @@ import (
 
 var students []models.Student
 
+var Students []models.Student
+
 // HomeHandler handles the root endpoint
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Welcome to the Student API!")

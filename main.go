@@ -6,6 +6,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"syscall"
 	"time"
 
 	"student-server/auth"
@@ -37,7 +38,7 @@ func main() {
 
 	// Channel to listen for OS signals
 	stop := make(chan os.Signal, 1)
-	signal.Notify(stop, os.Interrupt, os.Kill) // Capture Ctrl+C or kill signal
+	signal.Notify(stop, os.Interrupt, syscall.SIGTERM) // Capture Ctrl+C or kill signal
 
 	// Run server in a goroutine
 	go func() {

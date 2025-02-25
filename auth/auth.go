@@ -53,4 +53,5 @@ func BasicAuthMiddleware(next http.Handler) http.Handler {
 		// If authentication succeeds, pass request to next handler
 		next.ServeHTTP(w, r)
 	})
+
 }

@@ -1,9 +1,11 @@
 package handlers
 
 import (
+	"encoding/base64"
 	"encoding/json"
 	"fmt"
 	"net/http"
+	"strings"
 
 	"student-server/models"
 
@@ -14,14 +16,61 @@ var students []models.Student
 
 var Students []models.Student
 
+// BasicAuthMiddleware will check for valid basic authentication.
+func BasicAuthMiddleware(next http.Handler) http.Handler {
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// Get Authorization header
+		authHeader := r.Header.Get("Authorization")
+
+		// Check if the Authorization header is missing or invalid
+		if authHeader == "" {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		// Parse the "Basic" part of the Authorization header
+		authParts := strings.SplitN(authHeader, " ", 2)
+		if len(authParts) != 2 || authParts[0] != "Basic" {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		// Decode the base64-encoded credentials
+		decoded, err := base64.StdEncoding.DecodeString(authParts[1])
+		if err != nil {
+			http.Error(w, "Unauthorized", http.StatusUnauthorized)
+			return
+		}
+
+		// Split into username and password
+		credentials := strings.SplitN(string(decoded), ":", 2)
+		if len(credentials) != 2 || credentials[0] != "admin" || credentials[1] != "password123" {
+			http.Error(w, "Invalid credentials", http.StatusUnauthorized)
+			return
+		}
+
+		// Pass control to the next handler if authentication is successful
+		next.ServeHTTP(w, r)
+	})
+}
+
 // HomeHandler handles the root endpoint
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Welcome to the Student API!")
 }
 
 // GetStudentsHandler returns all students
+// GetStudentsHandler returns all students as JSON
 func GetStudentsHandler(w http.ResponseWriter, _ *http.Request) {
+	// If students slice is empty, return an empty array `[]` and not `null`
 	w.Header().Set("Content-Type", "application/json")
+	if len(students) == 0 {
+		// Explicitly returning an empty array
+		json.NewEncoder(w).Encode([]models.Student{})
+		return
+	}
+
+	// Otherwise, encode the students list into JSON
 	json.NewEncoder(w).Encode(students)
 }
 

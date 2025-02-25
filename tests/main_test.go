@@ -2,6 +2,7 @@ package tests
 
 import (
 	"bytes"
+	"encoding/base64"
 	"encoding/json"
 	"net/http"
 	"net/http/httptest"
@@ -35,6 +36,7 @@ func TestHomeHandler(t *testing.T) {
 
 func TestGetStudents(t *testing.T) {
 	// Case 1: When students slice is empty
+	students = []models.Student{} // Initialize the students slice as empty
 	req, err := http.NewRequest("GET", "/students", nil)
 	if err != nil {
 		t.Fatal(err)
@@ -44,13 +46,13 @@ func TestGetStudents(t *testing.T) {
 	handler := http.HandlerFunc(handlers.GetStudentsHandler)
 	handler.ServeHTTP(rr, req)
 
-	expectedEmpty := "[]\n"
+	expectedEmpty := "[]\n" // Expected response for empty students
 	if rr.Body.String() != expectedEmpty {
 		t.Errorf("[Empty Students] Expected %q, got %q", expectedEmpty, rr.Body.String())
 	}
 
 	// Case 2: When students slice has multiple entries
-	handlers.Students = []models.Student{ // Use the actual students slice from handlers package
+	students = []models.Student{
 		{ID: "1", Name: "Al Mamun", Age: 20, Grade: "A"},
 		{ID: "2", Name: "Efaz", Age: 22, Grade: "B"},
 	}
@@ -63,7 +65,13 @@ func TestGetStudents(t *testing.T) {
 	rr = httptest.NewRecorder()
 	handler.ServeHTTP(rr, req)
 
-	expectedJSON, _ := json.Marshal(handlers.Students)
+	// Marshal the students slice into JSON for comparison
+	expectedJSON, err := json.Marshal(students)
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	// Ensure that the expected JSON is returned
 	if rr.Body.String() != string(expectedJSON)+"\n" {
 		t.Errorf("[Multiple Students] Expected %q, got %q", string(expectedJSON), rr.Body.String())
 	}
@@ -544,4 +552,63 @@ func TestDeleteStudent(t *testing.T) {
 			}
 		}
 	})
+}
+
+// Helper function to create a request with authentication
+func createAuthRequest(method, url, username, password string, body string) *http.Request {
+	var req *http.Request
+	if body != "" {
+		req = httptest.NewRequest(method, url, bytes.NewReader([]byte(body)))
+	} else {
+		req = httptest.NewRequest(method, url, nil)
+	}
+
+	// Set Basic Authentication Header
+	auth := username + ":" + password
+	authHeader := "Basic " + base64.StdEncoding.EncodeToString([]byte(auth))
+	req.Header.Set("Authorization", authHeader)
+
+	return req
+}
+
+// Test accessing a protected route **without authentication** (should fail)
+func TestAuthWithoutCredentials(t *testing.T) {
+	req := httptest.NewRequest("GET", "/students", nil) // No auth
+	rr := httptest.NewRecorder()
+	// Wrap handler with middleware
+	handler := http.HandlerFunc(handlers.GetStudentsHandler)
+	middleware := handlers.BasicAuthMiddleware(handler)
+	middleware.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusUnauthorized {
+		t.Errorf("Expected 401 Unauthorized, got %d", rr.Code)
+	}
+}
+
+// Test accessing a protected route **with valid credentials** (should succeed)
+func TestAuthWithValidCredentials(t *testing.T) {
+	req := createAuthRequest("GET", "/students", "admin", "password123", "")
+	rr := httptest.NewRecorder()
+	// Wrap handler with middleware
+	handler := http.HandlerFunc(handlers.GetStudentsHandler)
+	middleware := handlers.BasicAuthMiddleware(handler)
+	middleware.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusOK {
+		t.Errorf("Expected 200 OK, got %d", rr.Code)
+	}
+}
+
+// Test accessing a protected route **with invalid credentials** (should fail)
+func TestAuthWithInvalidCredentials(t *testing.T) {
+	req := createAuthRequest("GET", "/students", "wronguser", "wrongpass", "")
+	rr := httptest.NewRecorder()
+	// Wrap handler with middleware
+	handler := http.HandlerFunc(handlers.GetStudentsHandler)
+	middleware := handlers.BasicAuthMiddleware(handler)
+	middleware.ServeHTTP(rr, req)
+
+	if rr.Code != http.StatusUnauthorized {
+		t.Errorf("Expected 401 Unauthorized, got %d", rr.Code)
+	}
 }

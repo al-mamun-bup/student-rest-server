@@ -2,6 +2,8 @@ package main
 
 import (
 	"context"
+	"flag"
+	"fmt"
 	"log"
 	"net/http"
 	"os"
@@ -16,6 +18,11 @@ import (
 )
 
 func main() {
+	// Define CLI flag for port number
+	port := flag.Int("port", 8080, "Port number for the server")
+	flag.Parse() // Parse CLI flags
+
+	// Create a new router
 	router := mux.NewRouter()
 
 	// Public route (No authentication required)
@@ -30,9 +37,10 @@ func main() {
 	protectedRoutes.HandleFunc("/{id}", handlers.UpdateStudentHandler).Methods("PUT")
 	protectedRoutes.HandleFunc("/{id}", handlers.DeleteStudentHandler).Methods("DELETE")
 
-	// Create an HTTP server
+	// Define server address using CLI-specified port
+	address := fmt.Sprintf(":%d", *port)
 	server := &http.Server{
-		Addr:    ":8080",
+		Addr:    address,
 		Handler: router,
 	}
 
@@ -42,7 +50,7 @@ func main() {
 
 	// Run server in a goroutine
 	go func() {
-		log.Println("Server running on port 8080...")
+		log.Printf("Server running on port %d...\n", *port)
 		if err := server.ListenAndServe(); err != nil && err != http.ErrServerClosed {
 			log.Fatalf("ListenAndServe error: %v", err)
 		}

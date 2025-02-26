@@ -4,8 +4,10 @@ import (
 	"encoding/base64"
 	"encoding/json"
 	"fmt"
+	"log"
 	"net/http"
 	"strings"
+	"time"
 
 	"student-server/models"
 
@@ -61,16 +63,33 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 
 // GetStudentsHandler returns all students
 // GetStudentsHandler returns all students as JSON
+// func GetStudentsHandler(w http.ResponseWriter, _ *http.Request) {
+// 	// If students slice is empty, return an empty array `[]` and not `null`
+// 	w.Header().Set("Content-Type", "application/json")
+// 	if len(students) == 0 {
+// 		// Explicitly returning an empty array
+// 		json.NewEncoder(w).Encode([]models.Student{})
+// 		return
+// 	}
+
+//		// Otherwise, encode the students list into JSON
+//		json.NewEncoder(w).Encode(students)
+//	}
 func GetStudentsHandler(w http.ResponseWriter, _ *http.Request) {
-	// If students slice is empty, return an empty array `[]` and not `null`
 	w.Header().Set("Content-Type", "application/json")
+
+	// Simulate a long-running request
+	log.Println("Processing request: Fetching students...") // Log request start
+	time.Sleep(10 * time.Second)                            // Simulate slow query or processing
+	log.Println("Request completed: Students fetched")      // Log request end
+
+	// If students slice is empty, return an empty array `[]` instead of `null`
 	if len(students) == 0 {
-		// Explicitly returning an empty array
 		json.NewEncoder(w).Encode([]models.Student{})
 		return
 	}
 
-	// Otherwise, encode the students list into JSON
+	// Otherwise, return the list of students
 	json.NewEncoder(w).Encode(students)
 }
 

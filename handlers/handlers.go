@@ -80,7 +80,7 @@ func GetStudentsHandler(w http.ResponseWriter, _ *http.Request) {
 
 	// Simulate a long-running request
 	log.Println("Processing request: Fetching students...") // Log request start
-	time.Sleep(10 * time.Second)                            // Simulate slow query or processing
+	time.Sleep(2 * time.Second)                             // Simulate slow query or processing
 	log.Println("Request completed: Students fetched")      // Log request end
 
 	// If students slice is empty, return an empty array `[]` instead of `null`

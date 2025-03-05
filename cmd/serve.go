@@ -7,6 +7,7 @@ import (
 	"net/http"
 	"os"
 	"os/signal"
+	"strconv"
 	"syscall"
 	"time"
 
@@ -33,6 +34,16 @@ func init() {
 }
 
 func startServer() {
+	// Read the PORT environment variable if set, else use the provided flag or default
+	portStr := os.Getenv("PORT")
+	if portStr != "" {
+		var err error
+		port, err = strconv.Atoi(portStr)
+		if err != nil {
+			log.Fatalf("Invalid port value: %v", err)
+		}
+	}
+
 	router := mux.NewRouter()
 
 	// Public route
@@ -66,7 +77,7 @@ func startServer() {
 	<-stop
 	log.Println("Shutting down server...")
 
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
 	if err := server.Shutdown(ctx); err != nil {

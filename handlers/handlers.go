@@ -12,46 +12,44 @@ import (
 	"student-server/models"
 
 	"github.com/gorilla/mux"
+	"gorm.io/gorm"
 )
 
-var students []models.Student
+var db *gorm.DB
 
-var Students []models.Student
+// SetDB sets the database instance to be used in the handlers
+func SetDB(database *gorm.DB) {
+	db = database
+	log.Println("Database instance set in handlers")
+}
 
-// BasicAuthMiddleware will check for valid basic authentication.
+// BasicAuthMiddleware checks for valid basic authentication.
 func BasicAuthMiddleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		// Get Authorization header
 		authHeader := r.Header.Get("Authorization")
-
-		// Check if the Authorization header is missing or invalid
 		if authHeader == "" {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
-		// Parse the "Basic" part of the Authorization header
 		authParts := strings.SplitN(authHeader, " ", 2)
 		if len(authParts) != 2 || authParts[0] != "Basic" {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
-		// Decode the base64-encoded credentials
 		decoded, err := base64.StdEncoding.DecodeString(authParts[1])
 		if err != nil {
 			http.Error(w, "Unauthorized", http.StatusUnauthorized)
 			return
 		}
 
-		// Split into username and password
 		credentials := strings.SplitN(string(decoded), ":", 2)
 		if len(credentials) != 2 || credentials[0] != "admin" || credentials[1] != "password123" {
 			http.Error(w, "Invalid credentials", http.StatusUnauthorized)
 			return
 		}
 
-		// Pass control to the next handler if authentication is successful
 		next.ServeHTTP(w, r)
 	})
 }
@@ -61,85 +59,79 @@ func HomeHandler(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Welcome to the Student API!")
 }
 
-// GetStudentsHandler returns all students
-// GetStudentsHandler returns all students as JSON
-// func GetStudentsHandler(w http.ResponseWriter, _ *http.Request) {
-// 	// If students slice is empty, return an empty array `[]` and not `null`
-// 	w.Header().Set("Content-Type", "application/json")
-// 	if len(students) == 0 {
-// 		// Explicitly returning an empty array
-// 		json.NewEncoder(w).Encode([]models.Student{})
-// 		return
-// 	}
-
-//		// Otherwise, encode the students list into JSON
-//		json.NewEncoder(w).Encode(students)
-//	}
+// GetStudentsHandler retrieves all students from the database
 func GetStudentsHandler(w http.ResponseWriter, _ *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 
-	// Simulate a long-running request
-	log.Println("Processing request: Fetching students...") // Log request start
-	time.Sleep(2 * time.Second)                             // Simulate slow query or processing
-	log.Println("Request completed: Students fetched")      // Log request end
-
-	// If students slice is empty, return an empty array `[]` instead of `null`
-	if len(students) == 0 {
-		json.NewEncoder(w).Encode([]models.Student{})
+	var students []models.Student
+	if err := db.Find(&students).Error; err != nil {
+		http.Error(w, "Failed to fetch students", http.StatusInternalServerError)
 		return
 	}
 
-	// Otherwise, return the list of students
+	// Log and simulate slow request (optional)
+	log.Println("Processing request: Fetching students...")
+	time.Sleep(2 * time.Second)
+	log.Println("Request completed: Students fetched")
+
 	json.NewEncoder(w).Encode(students)
 }
 
-// AddStudentHandler adds a student
+// AddStudentHandler adds a new student to the database
 func AddStudentHandler(w http.ResponseWriter, r *http.Request) {
 	var student models.Student
 	if err := json.NewDecoder(r.Body).Decode(&student); err != nil {
 		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
-	students = append(students, student)
+
+	if err := db.Create(&student).Error; err != nil {
+		http.Error(w, "Failed to add student", http.StatusInternalServerError)
+		return
+	}
+
 	w.WriteHeader(http.StatusCreated)
 	fmt.Fprintln(w, "Student added successfully")
 }
 
-// GetStudentByIDHandler fetches a student by ID
+// GetStudentByIDHandler retrieves a student by ID
 func GetStudentByIDHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	for _, student := range students {
-		if student.ID == id {
-			w.Header().Set("Content-Type", "application/json")
-			json.NewEncoder(w).Encode(student)
-			return
-		}
+	var student models.Student
+	if err := db.First(&student, id).Error; err != nil {
+		http.Error(w, "Student not found", http.StatusNotFound)
+		return
 	}
-	http.Error(w, "Student not found", http.StatusNotFound)
+
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(student)
 }
 
-// UpdateStudentHandler updates a student's details
+// UpdateStudentHandler updates an existing student's details
 func UpdateStudentHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	var updatedStudent models.Student
-	if err := json.NewDecoder(r.Body).Decode(&updatedStudent); err != nil {
+	var student models.Student
+	if err := db.First(&student, id).Error; err != nil {
+		http.Error(w, "Student not found", http.StatusNotFound)
+		return
+	}
+
+	if err := json.NewDecoder(r.Body).Decode(&student); err != nil {
 		http.Error(w, "Invalid input", http.StatusBadRequest)
 		return
 	}
 
-	for i, student := range students {
-		if student.ID == id {
-			students[i] = updatedStudent
-			w.WriteHeader(http.StatusOK)
-			fmt.Fprintln(w, "Student updated successfully")
-			return
-		}
+	if err := db.Save(&student).Error; err != nil {
+		http.Error(w, "Failed to update student", http.StatusInternalServerError)
+		return
 	}
-	http.Error(w, "Student not found", http.StatusNotFound)
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintln(w, "Student updated successfully")
 }
 
 // DeleteStudentHandler deletes a student by ID
@@ -147,13 +139,17 @@ func DeleteStudentHandler(w http.ResponseWriter, r *http.Request) {
 	vars := mux.Vars(r)
 	id := vars["id"]
 
-	for i, student := range students {
-		if student.ID == id {
-			students = append(students[:i], students[i+1:]...)
-			w.WriteHeader(http.StatusOK)
-			fmt.Fprintln(w, "Student deleted successfully")
-			return
-		}
+	var student models.Student
+	if err := db.First(&student, id).Error; err != nil {
+		http.Error(w, "Student not found", http.StatusNotFound)
+		return
 	}
-	http.Error(w, "Student not found", http.StatusNotFound)
+
+	if err := db.Delete(&student).Error; err != nil {
+		http.Error(w, "Failed to delete student", http.StatusInternalServerError)
+		return
+	}
+
+	w.WriteHeader(http.StatusOK)
+	fmt.Fprintln(w, "Student deleted successfully")
 }

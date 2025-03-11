@@ -56,7 +56,7 @@ func BasicAuthMiddleware(next http.Handler) http.Handler {
 
 // HomeHandler handles the root endpoint
 func HomeHandler(w http.ResponseWriter, r *http.Request) {
-	fmt.Fprintln(w, "Welcome to the Student API!")
+	fmt.Fprintln(w, "Welcome to the Student API! Made my Mamun ;)")
 }
 
 // GetStudentsHandler retrieves all students from the database

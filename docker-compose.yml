@@ -1,0 +1,40 @@
+version: "3.8"
+
+services:
+  student-server:
+    build: .
+    container_name: student-server
+    ports:
+      - "9090:9090"
+    networks:
+      - student-network
+    environment:
+      - DB_HOST=student-db
+      - DB_PORT=5432
+      - DB_USER=mamun
+      - DB_PASSWORD=1234
+      - DB_NAME=student_db
+    depends_on:
+      - student-db
+
+  student-db:
+    image: postgres:latest
+    container_name: student-db
+    environment:
+      POSTGRES_USER: mamun
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: student_db
+    networks:
+      - student-network
+    volumes:
+      - student-db-data:/var/lib/postgresql/data
+    ports:
+      - "5433:5432"
+
+networks:
+  student-network:
+    driver: bridge
+
+volumes:
+  student-db-data:
+    driver: local

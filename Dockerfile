@@ -1,5 +1,5 @@
-# Use official Golang image as the base
-FROM golang:1.21-alpine
+# Use official Golang image as the base (updated to Go 1.23)
+FROM golang:1.23-alpine
 
 # Set the Current Working Directory inside the container
 WORKDIR /student-server
@@ -16,11 +16,8 @@ COPY . .
 # Build the Go app
 RUN go build -o student-server .
 
-# Expose port (you can expose the default 8080 port)
-EXPOSE 8080
-
-# Default to 8080, but can be overridden via environment variable
-#ENV PORT=8080
+# Expose port 9090 (as you're running the server on port 9090)
+EXPOSE 9090
 
 # Command to run the executable with dynamic port
 CMD ["./student-server", "serve"]

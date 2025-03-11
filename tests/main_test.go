@@ -53,8 +53,8 @@ func TestGetStudents(t *testing.T) {
 
 	// Case 2: When students slice has multiple entries
 	students = []models.Student{
-		{ID: 1, Name: "Al Mamun", Age: 20, Grade: "A"},
-		{ID: 2, Name: "Efaz", Age: 22, Grade: "B"},
+		{Name: "Al Mamun", Age: 20, Grade: "A"},
+		{Name: "Efaz", Age: 22, Grade: "B"},
 	}
 
 	req, err = http.NewRequest("GET", "/students", nil)
@@ -80,7 +80,7 @@ func TestGetStudents(t *testing.T) {
 func TestPostStudent(t *testing.T) {
 	t.Run("Valid Student", func(t *testing.T) {
 		students = []models.Student{} // Reset student slice
-		newStudent := models.Student{ID: 1, Name: "Al Mamun", Age: 20, Grade: "A+"}
+		newStudent := models.Student{Name: "Al Mamun", Age: 20, Grade: "A+"}
 
 		studentJSON, err := json.Marshal(newStudent)
 		if err != nil {
@@ -171,8 +171,8 @@ func TestPostStudent(t *testing.T) {
 func TestGetStudentByID(t *testing.T) {
 	// Initialize test data
 	students = []models.Student{
-		{ID: 1, Name: "Al Mamun", Age: 20, Grade: "A"},
-		{ID: 2, Name: "Efaz", Age: 22, Grade: "B+"},
+		{Name: "Al Mamun", Age: 20, Grade: "A"},
+		{Name: "Efaz", Age: 22, Grade: "B+"},
 	}
 
 	t.Run("Valid Student ID", func(t *testing.T) {
@@ -265,12 +265,12 @@ func TestGetStudentByID(t *testing.T) {
 func TestUpdateStudent(t *testing.T) {
 	// Initialize students with test data
 	students = []models.Student{
-		{ID: 1, Name: "Al Mamun", Age: 20, Grade: "A"},
-		{ID: 2, Name: "Efaz", Age: 22, Grade: "B+"},
+		{Name: "Al Mamun", Age: 20, Grade: "A"},
+		{Name: "Efaz", Age: 22, Grade: "B+"},
 	}
 
 	t.Run("Valid Student Update", func(t *testing.T) {
-		updatedStudent := models.Student{ID: 1, Name: "Efaz", Age: 21, Grade: "B"}
+		updatedStudent := models.Student{Name: "Efaz", Age: 21, Grade: "B"}
 		updatedJSON, err := json.Marshal(updatedStudent)
 		if err != nil {
 			t.Fatal(err)
@@ -302,7 +302,7 @@ func TestUpdateStudent(t *testing.T) {
 	})
 
 	t.Run("Updating Non-Existent Student", func(t *testing.T) {
-		updatedStudent := models.Student{ID: 99, Name: "Efaz", Age: 25, Grade: "A+"}
+		updatedStudent := models.Student{Name: "Efaz", Age: 25, Grade: "A+"}
 		updatedJSON, err := json.Marshal(updatedStudent)
 		if err != nil {
 			t.Fatal(err)
@@ -329,7 +329,7 @@ func TestUpdateStudent(t *testing.T) {
 	})
 
 	t.Run("Invalid ID Format", func(t *testing.T) {
-		updatedStudent := models.Student{ID: 2, Name: "Efaz", Age: 25, Grade: "A+"}
+		updatedStudent := models.Student{Name: "Efaz", Age: 25, Grade: "A+"}
 		updatedJSON, err := json.Marshal(updatedStudent)
 		if err != nil {
 			t.Fatal(err)
@@ -359,8 +359,8 @@ func TestUpdateStudent(t *testing.T) {
 func TestDeleteStudent(t *testing.T) {
 	// Initialize students with multiple entries
 	students = []models.Student{
-		{ID: 1, Name: "Al Mamun", Age: 20, Grade: "A"},
-		{ID: 2, Name: "Efaz", Age: 22, Grade: "B+"},
+		{Name: "Al Mamun", Age: 20, Grade: "A"},
+		{Name: "Efaz", Age: 22, Grade: "B+"},
 	}
 
 	t.Run("Delete Existing Student", func(t *testing.T) {
@@ -506,9 +506,9 @@ func TestDeleteStudent(t *testing.T) {
 
 	t.Run("Ensure Remaining Students Exist", func(t *testing.T) {
 		students = []models.Student{
-			{ID: 1, Name: "Al Mamun", Age: 20, Grade: "A"},
-			{ID: 2, Name: "Efaz", Age: 22, Grade: "B+"},
-			{ID: 3, Name: "Al Mamun", Age: 20, Grade: "A+"},
+			{Name: "Al Mamun", Age: 20, Grade: "A"},
+			{Name: "Efaz", Age: 22, Grade: "B+"},
+			{Name: "Al Mamun", Age: 20, Grade: "A+"},
 		}
 
 		req, err := http.NewRequest("DELETE", "/students/2", nil) // Deleting "Efaz"

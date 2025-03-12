@@ -71,7 +71,7 @@ func GetStudentsHandler(w http.ResponseWriter, _ *http.Request) {
 
 	// Log and simulate slow request (optional)
 	log.Println("Processing request: Fetching students...")
-	time.Sleep(2 * time.Second)
+	time.Sleep(1 * time.Second)
 	log.Println("Request completed: Students fetched")
 
 	json.NewEncoder(w).Encode(students)

@@ -2,34 +2,34 @@ version: "3.8"
 
 services:
   student-server:
-    build: .
+    build:
+      context: .
+      dockerfile: Dockerfile
     container_name: student-server
     ports:
-      - "9090:9090"
+      - "9090:8080"
     networks:
       - student-network
-    environment:
-      - DB_HOST=student-db
-      - DB_PORT=5432
-      - DB_USER=mamun
-      - DB_PASSWORD=1234
-      - DB_NAME=student_db
+    env_file: 
+      - .env  # Load environment variables from .env
     depends_on:
       - student-db
 
   student-db:
     image: postgres:latest
     container_name: student-db
+    env_file: 
+      - .env  # Load environment variables from .env
     environment:
-      POSTGRES_USER: mamun
-      POSTGRES_PASSWORD: 1234
-      POSTGRES_DB: student_db
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     networks:
       - student-network
     volumes:
       - student-db-data:/var/lib/postgresql/data
     ports:
-      - "5433:5432"
+      - "5432:5432"
 
 networks:
   student-network:

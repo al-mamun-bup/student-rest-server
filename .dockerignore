@@ -1,7 +1,0 @@
-# Ignore unnecessary files
-.git
-node_modules
-tmp
-bin
-Dockerfile
-.dockerignore

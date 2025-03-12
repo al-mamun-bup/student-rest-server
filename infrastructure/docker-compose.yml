@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  student-db:
+    image: postgres:latest
+    container_name: student-db
+    environment:
+      POSTGRES_USER: mamun
+      POSTGRES_PASSWORD: 1234
+      POSTGRES_DB: student_db
+    ports:
+      - "5432:5432"
+    networks:
+      - student_network
+
+  student-server:
+    build:
+      context: ..  # Set the context to the parent directory to include the main Go code
+      dockerfile: infrastructure/Dockerfile  # Specify the Dockerfile location inside the infrastructure folder
+    container_name: student-server
+    depends_on:
+      - student-db  # Wait for the database container to be up
+    ports:
+      - "9090:8080"
+    networks:
+      - student_network
+    environment:
+      DB_HOST: student-db
+      DB_PORT: 5432
+      DB_USER: mamun
+      DB_PASSWORD: 1234
+      DB_NAME: student_db
+    command: ["./student-server", "serve"]
+
+networks:
+  student_network:
+    driver: bridge

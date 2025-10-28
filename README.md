@@ -2,7 +2,7 @@
 
 ![Go](https://img.shields.io/badge/Go-1.23-blue) ![PostgreSQL](https://img.shields.io/badge/PostgreSQL-15-blue) ![Docker](https://img.shields.io/badge/Docker-Supported-blue) ![License](https://img.shields.io/badge/license-MIT-green)
 
-A simple, data-persistent REST API built in Go to manage student records, powered by PostgreSQL and Docker. 🚀
+A highly efficient, data-persistent REST API built in Go to manage student records, powered by PostgreSQL and Docker. 🚀
 
 ## ✨ Features
 - 📝 Add, retrieve, update, and delete students
@@ -21,7 +21,24 @@ A simple, data-persistent REST API built in Go to manage student records, powere
 - Go (v1.23 or later)
 - Docker & Docker Compose
 - PostgreSQL (optional if using Docker)
+## How to Run Locally
 
+To run this project locally, make sure you have the following installed on your machine:
+- [Git](https://git-scm.com/)
+- [Docker](https://www.docker.com/) (make sure you have `docker compose`)
+
+### Steps
+
+1. Clone the repository:
+```bash
+git clone git@github.com:al-mamun-bup/student-rest-server.git
+cd student-rest-server
+```
+---
+
+The project is implemented by following [The Clean Code Blog by Robert C. Martin (Uncle Bob)](https://blog.cleancoder.com/uncle-bob/2011/11/22/Clean-Architecture.html)
+
+---
 ### 🚀 Running the Server
 #### Using Makefile
 To start the server with default settings (port `8080`):
